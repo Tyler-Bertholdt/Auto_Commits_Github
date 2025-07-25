@@ -22,3 +22,8 @@ This handy little script keeps an eye on your dotfiles (or any folder you choose
 - People who want a smarter, simpler way to handle version control.
 
 *Let the script do the heavy lifting while you focus on what matters most!*
+
+
+## License
+
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](./LICENSE) file for details.

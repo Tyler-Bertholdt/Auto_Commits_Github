@@ -23,7 +23,7 @@ git add -A
 while true; do
     inotifywait -qr -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"
     while true; do
-        if inotifywait -qr -t 30 -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"; then
+        if inotifywait -qr -t 120 -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"; then
             continue  
         else
             break 
