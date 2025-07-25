@@ -6,10 +6,8 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# Expand relative path to absolute path
 DOTFILES_PATH="$(realpath "$1")"
 
-# Check if path exists
 cd "$DOTFILES_PATH" || { echo "❌ Failed to cd into $DOTFILES_PATH"; exit 1; }
 
 check_and_commit() {
