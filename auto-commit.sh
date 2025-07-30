@@ -1,18 +1,29 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <path-to-watch> <branch-to-push>"
-    echo
-    if [ -d "$1/.git" ]; then
-        echo "Your branches:"
-        git -C "$1" branch --format=" - %(refname:short)"
-    else
-        echo "❌ '$1' is not a valid Git repository"
-    fi
+    echo -e "Usage: $0 <path-to-watch> <branch-to-push>\n"
+    echo "❌ No path provided"
     exit 1
 fi
 
+if [ -d "$1/.git" ]; then
+    echo "Your branches in '$1':"
+    git -C "$1" branch --format=" - %(refname:short)" | sed 's/^\*/👉/'
+    echo
+elif [ ! -d "$1" ]; then
+    echo "❌ '$1' is not a valid directory"
+    exit 1
+else
+    echo "❌ '$1' is not a valid Git repository"
+    exit 1
+fi
 DOTFILES_PATH="$(realpath "$1")"
+if [ -z "$2" ]; then
+    BRANCH=$(git -C "$DOTFILES_PATH" rev-parse --abbrev-ref HEAD)
+    echo "ℹ️  No branch specified. Using current branch: '$BRANCH'"
+else
+    BRANCH="$2"
+fi
 cd "$DOTFILES_PATH" || { echo "❌ Failed to cd into $DOTFILES_PATH"; exit 1; }
 
 check_and_commit_and_push() {
@@ -22,10 +33,10 @@ check_and_commit_and_push() {
         git add -A
         git commit -m "Auto commit at $(date '+%Y-%m-%d %H:%M:%S')"
         
-        git pull --rebase origin main
-        git push origin main
+        git pull --rebase origin "$BRANCH"
+        git push origin "$BRANCH"
 
-        notify-send "✅ Git Auto Commit" "Committed and pushed to testing"
+        notify-send "✅ Git Auto Commit" "Committed and pushed to '$BRANCH'"
         git status
     else
         notify-send "ℹ️ Git Auto Commit" "No changes to commit"
