@@ -35,7 +35,7 @@ rm -f "$FLAG_FILE" "$EXIT_FILE"
 
 (
     while true; do
-        IFS= read -rsn1 key < /dev/tty
+        IFS= read -rsn3 -t 0.1 key < /dev/tty
         case "${key,,}" in
             y) touch "$FLAG_FILE" ;;
             q) touch "$EXIT_FILE" ;;
@@ -64,20 +64,20 @@ while true; do
     # 🛎 Wait for file change
     inotifywait -qr -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"
 
-    echo "⏳ Watching for 'y' or 'q' for next 300 seconds..."
+    echo "⏳ Watching for 'y' or 'q' for next 302 seconds..."
 
     # ⏲ Timer loop — check every second for keypress or timeout
-    for _ in {1..300}; do
+    for _ in {3..300}; do
         if [[ -f "$EXIT_FILE" ]]; then
             echo "[FORCE EXIT] Exiting Git Auto Commit script"
             rm -f "$EXIT_FILE" "$FLAG_FILE"
-            exit 0
+            exit 2
         elif [[ -f "$FLAG_FILE" ]]; then
             echo "🟢 Detected 'y' press — committing immediately..."
             rm -f "$FLAG_FILE"
             check_and_commit_and_push
-            break  # ⛔ break out of 300s wait loop
+            break  # ⛔ break out of 302s wait loop
         fi
-        sleep 1
+        sleep 3
     done
 done
