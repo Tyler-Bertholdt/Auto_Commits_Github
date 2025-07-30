@@ -35,7 +35,7 @@ rm -f "$FLAG_FILE" "$EXIT_FILE"
 
 (
     while true; do
-        IFS= read -rsn5 key < /dev/tty
+        IFS= read -rsn1 key < /dev/tty
         case "${key,,}" in
             y) touch "$FLAG_FILE" ;;
             q) touch "$EXIT_FILE" ;;
