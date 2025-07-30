@@ -35,7 +35,7 @@ rm -f "$FLAG_FILE" "$EXIT_FILE"
 
 (
     while true; do
-        IFS= read -rsn5 key < /dev/tty
+        IFS= read -rsn1 key < /dev/tty
         case "${key,,}" in
             y) touch "$FLAG_FILE" ;;
             q) touch "$EXIT_FILE" ;;
@@ -76,8 +76,8 @@ while true; do
             echo "🟢 Detected 'y' press — committing immediately..."
             rm -f "$FLAG_FILE"
             check_and_commit_and_push
-            break  
+            break  # ⛔ break out of 300s wait loop
         fi
-        sleep 0
+        sleep 1
     done
 done
