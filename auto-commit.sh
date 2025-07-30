@@ -76,8 +76,8 @@ while true; do
             echo "🟢 Detected 'y' press — committing immediately..."
             rm -f "$FLAG_FILE"
             check_and_commit_and_push
-            break  # ⛔ break out of 300s wait loop
+            break  
         fi
-        sleep 1
+        sleep 0
     done
 done
