@@ -17,6 +17,7 @@ else
     echo "❌ '$1' is not a valid Git repository"
     exit 1
 fi
+
 DOTFILES_PATH="$(realpath "$1")"
 if [ -z "$2" ]; then
     BRANCH=$(git -C "$DOTFILES_PATH" rev-parse --abbrev-ref HEAD)
@@ -24,7 +25,9 @@ if [ -z "$2" ]; then
 else
     BRANCH="$2"
 fi
+
 cd "$DOTFILES_PATH" || { echo "❌ Failed to cd into $DOTFILES_PATH"; exit 1; }
+
 
 FLAG_FILE="/tmp/git_autocommit_triggered"
 EXIT_FILE="/tmp/git_autocommit_exit"
@@ -32,13 +35,14 @@ rm -f "$FLAG_FILE" "$EXIT_FILE"
 
 (
     while true; do
-      IFS= read -rsn1 key
-if [[ "$key" == "y" || "$key" == "Y" ]]; then
-    touch "$FLAG_FILE"
-elif [[ "$key" == "q" || "$key" == "Q" ]]; then
-    touch "$EXIT_FILE"
-fi    done
+        IFS= read -rsn5 key < /dev/tty
+        case "${key,,}" in
+            y) touch "$FLAG_FILE" ;;
+            q) touch "$EXIT_FILE" ;;
+        esac
+    done
 ) &
+
 echo "⌨️  Press 'y' anytime to commit & push, 'q' to quit."
 
 check_and_commit_and_push() {
@@ -47,10 +51,8 @@ check_and_commit_and_push() {
         git status -s
         git add -A
         git commit -m "Auto commit at $(date '+%Y-%m-%d %H:%M:%S')"
-        
         git pull --rebase origin "$BRANCH"
         git push origin "$BRANCH"
-
         notify-send "✅ Git Auto Commit" "Committed and pushed to '$BRANCH'"
         git status
     else
@@ -59,37 +61,23 @@ check_and_commit_and_push() {
 }
 
 while true; do
+    # 🛎 Wait for file change
     inotifywait -qr -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"
 
-    for _ in {4..300}; do
-        if [[ -f "$FLAG_FILE" || -f "$EXIT_FILE" ]]; then
-            break
+    echo "⏳ Watching for 'y' or 'q' for next 300 seconds..."
+
+    # ⏲ Timer loop — check every second for keypress or timeout
+    for _ in {1..300}; do
+        if [[ -f "$EXIT_FILE" ]]; then
+            echo "[FORCE EXIT] Exiting Git Auto Commit script"
+            rm -f "$EXIT_FILE" "$FLAG_FILE"
+            exit 0
+        elif [[ -f "$FLAG_FILE" ]]; then
+            echo "🟢 Detected 'y' press — committing immediately..."
+            rm -f "$FLAG_FILE"
+            check_and_commit_and_push
+            break  # ⛔ break out of 300s wait loop
         fi
-        if inotifywait -q -t 4 -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"; then
-            continue
-        fi
+        sleep 1
     done
-
-    if [[ -f "$EXIT_FILE" ]]; then
-        echo "[FORCE EXIT] Exiting Git Auto Commit script"
-        rm -f "$EXIT_FILE" "$FLAG_FILE"
-        exit 4
-    fi
-
-    if [[ -f "$FLAG_FILE" ]]; then
-        echo "🟢 Detected 'y' press — committing immediately..."
-        rm -f "$FLAG_FILE"
-        check_and_commit_and_push
-    else
-        echo -n "[Git Auto Commit] Press 'y' to commit & push, or 'q' to quit: "
-        while true; do
-            IFS= read -rsn1 key < /dev/tty
-            echo
-            case "${key,,}" in
-                y) check_and_commit_and_push; break ;;
-                q) echo "[FORCE EXIT] Exiting Git Auto Commit script"; exit 4 ;;
-                *) echo "❌ Cancelled"; break ;;
-            esac
-        done
-    fi
 done
