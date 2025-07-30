@@ -1,7 +1,14 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <path-to-watch>"
+    echo "Usage: $0 <path-to-watch> <branch-to-push>"
+    echo
+    if [ -d "$1/.git" ]; then
+        echo "Your branches:"
+        git -C "$1" branch --format=" - %(refname:short)"
+    else
+        echo "❌ '$1' is not a valid Git repository"
+    fi
     exit 1
 fi
 
@@ -15,8 +22,8 @@ check_and_commit_and_push() {
         git add -A
         git commit -m "Auto commit at $(date '+%Y-%m-%d %H:%M:%S')"
         
-        git pull --rebase origin testing
-        git push origin testing
+        git pull --rebase origin main
+        git push origin main
 
         notify-send "✅ Git Auto Commit" "Committed and pushed to testing"
         git status
