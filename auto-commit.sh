@@ -32,12 +32,12 @@ rm -f "$FLAG_FILE" "$EXIT_FILE"
 
 (
     while true; do
-        IFS= read -rsn1 key < /dev/tty
-        case "${key,,}" in
-            y) touch "$FLAG_FILE" ;;
-            q) touch "$EXIT_FILE" ;;
-        esac
-    done
+      IFS= read -rsn1 key
+if [[ "$key" == "y" || "$key" == "Y" ]]; then
+    touch "$FLAG_FILE"
+elif [[ "$key" == "q" || "$key" == "Q" ]]; then
+    touch "$EXIT_FILE"
+fi    done
 ) &
 echo "⌨️  Press 'y' anytime to commit & push, 'q' to quit."
 
