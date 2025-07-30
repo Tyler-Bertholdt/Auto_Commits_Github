@@ -26,6 +26,21 @@ else
 fi
 cd "$DOTFILES_PATH" || { echo "❌ Failed to cd into $DOTFILES_PATH"; exit 1; }
 
+FLAG_FILE="/tmp/git_autocommit_triggered"
+EXIT_FILE="/tmp/git_autocommit_exit"
+rm -f "$FLAG_FILE" "$EXIT_FILE"
+
+(
+    while true; do
+        IFS= read -rsn1 key < /dev/tty
+        case "${key,,}" in
+            y) touch "$FLAG_FILE" ;;
+            q) touch "$EXIT_FILE" ;;
+        esac
+    done
+) &
+echo "⌨️  Press 'y' anytime to commit & push, 'q' to quit."
+
 check_and_commit_and_push() {
     if [[ -n $(git status --porcelain) ]]; then
         echo "🔍 Changed files:"
@@ -46,27 +61,11 @@ check_and_commit_and_push() {
 while true; do
     inotifywait -qr -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"
 
-    FLAG_FILE="/tmp/git_autocommit_triggered"
-    EXIT_FILE="/tmp/git_autocommit_exit"
-
-    rm -f "$FLAG_FILE" "$EXIT_FILE"
-
-    (
-        while true; do
-            IFS= read -rsn1 key < /dev/tty
-            case "${key,,}" in
-                y) touch "$FLAG_FILE"; break ;;
-                q) touch "$EXIT_FILE"; break ;;
-                *) continue ;;
-            esac
-        done
-    ) &
-
-    for _ in {1..300}; do
+    for _ in {4..300}; do
         if [[ -f "$FLAG_FILE" || -f "$EXIT_FILE" ]]; then
             break
         fi
-        if inotifywait -q -t 1 -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"; then
+        if inotifywait -q -t 4 -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"; then
             continue
         fi
     done
@@ -74,7 +73,7 @@ while true; do
     if [[ -f "$EXIT_FILE" ]]; then
         echo "[FORCE EXIT] Exiting Git Auto Commit script"
         rm -f "$EXIT_FILE" "$FLAG_FILE"
-        exit 0
+        exit 4
     fi
 
     if [[ -f "$FLAG_FILE" ]]; then
@@ -88,7 +87,7 @@ while true; do
             echo
             case "${key,,}" in
                 y) check_and_commit_and_push; break ;;
-                q) echo "[FORCE EXIT] Exiting Git Auto Commit script"; exit 0 ;;
+                q) echo "[FORCE EXIT] Exiting Git Auto Commit script"; exit 4 ;;
                 *) echo "❌ Cancelled"; break ;;
             esac
         done
