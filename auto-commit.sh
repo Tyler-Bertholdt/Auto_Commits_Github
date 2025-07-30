@@ -35,7 +35,7 @@ rm -f "$FLAG_FILE" "$EXIT_FILE"
 
 (
     while true; do
-        IFS= read -rsn1 -t 0.1 key < /dev/tty
+IFS= read -rsn1 key < /dev/tty 2>/dev/null || break
         case "${key,,}" in
             y) touch "$FLAG_FILE" ;;
             q) touch "$EXIT_FILE" ;;
@@ -67,7 +67,7 @@ while true; do
     echo "⏳ Watching for 'y' or 'q' for next 300 seconds..."
 
     # ⏲ Timer loop — check every second for keypress or timeout
-    for _ in {1..300}; do
+    for _ in {1..3000}; do
         if [[ -f "$EXIT_FILE" ]]; then
             echo "[FORCE EXIT] Exiting Git Auto Commit script"
             rm -f "$EXIT_FILE" "$FLAG_FILE"
