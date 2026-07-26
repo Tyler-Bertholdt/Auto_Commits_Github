@@ -20,12 +20,8 @@ if [ -z "$2" ]; then
 else
     BRANCH="$2"
 fi
-
 cd "$DOTFILES_PATH" || exit 1
-
-# Create dummy file if not exists
 touch "$DUMMY_FILE"
-
 check_and_commit_and_push() {
     if [[ -n $(git status --porcelain) ]]; then
         echo "🔍 Changed files:"
@@ -42,7 +38,6 @@ check_and_commit_and_push() {
 }
 
 while true; do
-    # Wait for any real file change (excluding .git) or dummy file touch
     inotifywait -qr -e modify,create,delete --exclude '\.git/' "$DOTFILES_PATH"
 
     echo -n "[Git Auto Commit] Press 'y' to commit & push, or 'q' to quit: "
